@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satu Data Provinsi Banten - Dashboard & Profil Interaktif</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        banten: {
+                            dark: '#0B2F1D',      /* Deep Forest Green - Banten Forest */
+                            emerald: '#0F5132',   /* Classic Islamic Green */
+                            lightemerald: '#198754',
+                            gold: '#FFC107',      /* Sultanate Gold Accent */
+                            golddark: '#D39E00',
+                            clay: '#F4EAE1',      /* Soft background */
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- ==================== CONTROLLER SCRIPTS (LOADED BEFORE ALPINE) ==================== -->
+    <script>
+        // Define the data controller
+        function bantenApp() {
+            return {
+                // UI States
+                loading: true,
+                loadingProgress: 0,
+                loadingQuote: 'Sedang menyiapkan peta spasial Provinsi Banten...',
+                activeTab: 'profile',
+                darkMode: false,
+                iframeFullscreen: false,
+                
+                // AI Assistant States
+                userInput: '',
+                botTyping: false,
+                chatHistory: [],
+                
+                quotes: [
+                    'Menghubungkan 8 Kabupaten dan Kota melalui integrasi data...',
+                    'Satu Data Banten: Menuju tata kelola pemerintahan yang transparan...',
+                    'Memuat statistik kependudukan, pertumbuhan ekonomi, dan IPM Banten...',
+                    'Menyiapkan visualisasi terpadu dari Google Looker Studio Banten...',
+                    'Sampurasun! Asisten virtual Sura siap menyambut Anda...'
+                ],
+
+                initApp() {
+                    this.startLoading();
+                    this.setupCharts();
+                    
+                    // Detect system dark mode
+                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                        this.darkMode = true;
+                        document.documentElement.classList.add('dark');
+                    }
+                    
+                    // Re-render Lucide icons initially
+                    setTimeout(() => {
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+                    }, 100);
+                },
+
+                // Simulated Preloader Animation
+                startLoading() {
+                    let interval = setInterval(() => {
+                        this.loadingProgress += (100 - this.loadingProgress) * 0.15;
+                        
+                        // Swap quote text randomly
+                        if (Math.random() < 0.25) {
+                            this.loadingQuote = this.quotes[Math.floor(Math.random() * this.quotes.length)];
+                        }
+
+                        if (this.loadingProgress >= 98) {
+                            clearInterval(interval);
+                            this.loadingProgress = 100;
+                            setTimeout(() => {
+                                this.loading = false;
+                                // Force render icons in application space
+                                this.$nextTick(() => {
+                                    if (typeof lucide !== 'undefined') {
+                                        lucide.createIcons();
+                                    }
+                                });
+                            }, 500);
+                        }
+                    }, 150);
+                },
+
+                skipLoading() {
+                    this.loadingProgress = 100;
+                    this.loading = false;
+                    this.$nextTick(() => {
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+                    });
+                },
+
+                toggleDarkMode() {
+                    this.darkMode = !this.darkMode;
+                    if (this.darkMode) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                },
+
+                // Looker Studio Actions
+                refreshIframe() {
+                    const iframe = document.getElementById('banten-iframe');
+                    const loader = document.getElementById('iframe-loader');
+                    if (iframe && loader) {
+                        loader.classList.remove('opacity-0', 'pointer-events-none');
+                        iframe.src = iframe.src;
+                    }
+                },
+
+                toggleFullscreenIframe() {
+                    this.iframeFullscreen = !this.iframeFullscreen;
+                    // Auto recalculate icons upon full screen transitions
+                    setTimeout(() => {
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+                    }, 100);
+                },
+
+                // Setup ChartJS elements
+                setupCharts() {
+                    this.$nextTick(() => {
+                        // Chart Laju Pertumbuhan Ekonomi
+                        const ctxEkonomi = document.getElementById('chartEkonomi');
+                        if (ctxEkonomi) {
+                            new Chart(ctxEkonomi, {
+                                type: 'line',
+                                data: {
+                                    labels: ['2020 (Pandemi)', '2021', '2022', '2023', '2024', '2025 (Estimasi)'],
+                                    datasets: [{
+                                        label: 'Banten',
+                                        data: [-3.38, 4.44, 5.03, 4.81, 4.96, 5.12],
+                                        borderColor: '#0F5132',
+                                        backgroundColor: 'rgba(15, 81, 50, 0.1)',
+                                        borderWidth: 3,
+                                        tension: 0.3,
+                                        fill: true
+                                    }, {
+                                        label: 'Nasional',
+                                        data: [-2.07, 3.69, 5.31, 5.05, 5.08, 5.10],
+                                        borderColor: '#FFC107',
+                                        borderDash: [5, 5],
+                                        borderWidth: 2,
+                                        tension: 0.3,
+                                        fill: false
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { position: 'bottom' }
+                                    },
+                                    scales: {
+                                        y: { grid: { color: 'rgba(0,0,0,0.05)' } },
+                                        x: { grid: { display: false } }
+                                    }
+                                }
+                            });
+                        }
+
+                        // Chart Tren IPM
+                        const ctxIPM = document.getElementById('chartIPM');
+                        if (ctxIPM) {
+                            new Chart(ctxIPM, {
+                                type: 'bar',
+                                data: {
+                                    labels: ['2019', '2020', '2021', '2022', '2023', '2024'],
+                                    datasets: [{
+                                        label: 'IPM Banten',
+                                        data: [72.44, 72.45, 72.72, 73.32, 75.77, 76.15],
+                                        backgroundColor: '#0F5132',
+                                        borderRadius: 8,
+                                        hoverBackgroundColor: '#FFC107'
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false }
+                                    },
+                                    scales: {
+                                        y: { min: 70, max: 78, grid: { color: 'rgba(0,0,0,0.05)' } },
+                                        x: { grid: { display: false } }
+                                    }
+                                }
+                            });
+                        }
+                    });
+                },
+
+                // Suggestion Buttons in AI Assistant
+                askSuggested(query) {
+                    this.userInput = query;
+                    this.sendMessage();
+                },
+
+                // Chat AI via Gemini API with exponential backoff & proper config
+                async sendMessage() {
+                    if (!this.userInput.trim() || this.botTyping) return;
+
+                    const userQuery = this.userInput;
+                    this.chatHistory.push({ role: 'user', text: userQuery });
+                    this.userInput = '';
+                    this.botTyping = true;
+                    
+                    // Auto-scroll chat area down
+                    this.scrollChat();
+
+                    // System Prompt to frame Gemini as Banten Data expert
+                    const systemPrompt = `Anda adalah Sura (Satu Data Banten AI), asisten data virtual untuk Pemerintah Provinsi Banten, Indonesia.
+Tugas Anda adalah menjawab pertanyaan seputar Provinsi Banten menggunakan informasi tepercaya.
+Data Kunci Banten:
+- Jumlah penduduk: sekitar 12,4 juta jiwa.
+- Wilayah Administratif: 4 Kabupaten (Lebak, Pandeglang, Serang, Tangerang) dan 4 Kota (Tangerang, Cilegon, Serang, Tangerang Selatan).
+- Ibu Kota Provinsi: Kota Serang.
+- IPM (2024): 76,15 (Kategori Tinggi).
+- Sektor Utama: Industri Logam/Kimia (Cilegon), Manufaktur/Logistik (Tangerang Raya), Pariwisata alam & sejarah (Anyer, Carita, Sawarna, Baduy).
+- Semboyan: "Iman dan Taqwa".
+Berbicaralah dengan nada ramah, informatif, menyapa dengan salam khas Sunda Banten ("Sampurasun") jika sesuai, serta tawarkan kemudahan dalam menyajikan data statistik.`;
+
+                    // Gemini API Integration Parameters
+                    const apiKey = ""; 
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+                    const payload = {
+                        contents: [
+                            {
+                                parts: [
+                                    { text: userQuery }
+                                ]
+                            }
+                        ],
+                        systemInstruction: {
+                            parts: [
+                                { text: systemPrompt }
+                            ]
+                        }
+                    };
+
+                    // Exponential Backoff Call
+                    let attempts = 5;
+                    let delay = 1000;
+                    let resultText = "";
+
+                    while (attempts > 0) {
+                        try {
+                            const response = await fetch(url, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(payload)
+                            });
+
+                            if (!response.ok) {
+                                throw new Error(`HTTP Error Status: ${response.status}`);
+                            }
+
+                            const result = await response.json();
+                            resultText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, format balasan AI tidak terdeteksi.";
+                            break; 
+                        } catch (error) {
+                            attempts--;
+                            if (attempts === 0) {
+                                resultText = "Mohon maaf, sistem asisten AI sedang sibuk atau kehabisan kuota akses. Anda dapat mencoba kembali dalam beberapa saat.";
+                            } else {
+                                await new Promise(resolve => setTimeout(resolve, delay));
+                                delay *= 2; 
+                            }
+                        }
+                    }
+
+                    // Push answer to history and scroll
+                    this.chatHistory.push({ role: 'assistant', text: this.formatMarkdown(resultText) });
+                    this.botTyping = false;
+                    this.scrollChat();
+                },
+
+                formatMarkdown(text) {
+                    // Quick and neat conversion helper for simple markdown elements like bold & list
+                    return text
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/^\s*-\s+(.*)/gm, '&bull; $1<br>')
+                        .replace(/\n/g, '<br>');
+                },
+
+                scrollChat() {
+                    this.$nextTick(() => {
+                        const chatArea = document.getElementById('chat-box-area');
+                        if (chatArea) {
+                            chatArea.scrollTop = chatArea.scrollHeight;
+                        }
+                    });
+                }
+            }
+        }
+
+        // Register the Alpine Component during alpine:init event to guarantee synchronization
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('bantenApp', bantenApp);
+        });
+    </script>
+
+    <!-- Alpine.js (Loaded with defer so it executes after scripts above are parsed) -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .banten-title {
+            font-family: 'Cinzel', serif;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0B2F1D;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0F5132;
+        }
+        /* Keyframe animations */
+        @keyframes pulse-gold {
+            0%, 100% { opacity: 0.6; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+        .animate-pulse-gold {
+            animation: pulse-gold 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="overflow-hidden text-slate-800" x-data="bantenApp()">
+
+    <!-- ==================== ANIMASI & LOADING SCREEN ==================== -->
+    <div x-show="loading" 
+         x-transition:leave="transition ease-in duration-1000 transform"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-105"
+         class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-banten-dark via-emerald-950 to-emerald-900 text-white p-4">
+        
+        <!-- Animated Background Particles -->
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#FFC107_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none"></div>
+        
+        <!-- Logo / Icon Menara Banten SVG Stylized -->
+        <div class="relative mb-6 transform scale-90 sm:scale-100">
+            <!-- Glowing ring background -->
+            <div class="absolute -inset-4 rounded-full bg-banten-gold opacity-20 blur-xl animate-pulse"></div>
+            
+            <svg class="w-32 h-32 text-banten-gold drop-shadow-[0_0_15px_rgba(255,193,7,0.6)]" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Base Tier 1 -->
+                <path d="M25 110 H75 L70 95 H30 Z" fill="currentColor" opacity="0.9"/>
+                <!-- Tier 2 -->
+                <path d="M32 95 L34 75 H66 L68 95 Z" fill="currentColor" opacity="0.8"/>
+                <!-- Tier 3 -->
+                <path d="M36 75 L38 55 H62 L64 75 Z" fill="currentColor" opacity="0.9"/>
+                <!-- Tier 4 -->
+                <path d="M40 55 L42 35 H58 L60 55 Z" fill="currentColor" opacity="1"/>
+                <!-- Pagoda Roof 1 -->
+                <path d="M30 35 L50 20 L70 35 Z" fill="#0B2F1D" stroke="currentColor" stroke-width="2"/>
+                <!-- Pagoda Roof 2 (Top Peak) -->
+                <path d="M42 20 L50 5 L58 20 Z" fill="currentColor"/>
+                <!-- Minaret windows/details -->
+                <rect x="47" y="42" width="6" height="8" rx="2" fill="#0B2F1D"/>
+                <rect x="47" y="62" width="6" height="8" rx="2" fill="#0B2F1D"/>
+                <!-- Base Ground Shadow -->
+                <ellipse cx="50" cy="115" rx="35" ry="4" fill="rgba(0,0,0,0.4)" />
+            </svg>
+        </div>
+
+        <!-- Text Animation -->
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-wider text-center banten-title text-banten-gold">
+            SATU DATA BANTEN
+        </h1>
+        <p class="text-sm sm:text-base text-emerald-200 mt-2 font-medium tracking-widest text-center uppercase">
+            Portal Informasi & Statistik Terpadu Provinsi Banten
+        </p>
+
+        <!-- Loading Progress Bar -->
+        <div class="w-64 sm:w-80 bg-emerald-900/50 rounded-full h-2 mt-8 overflow-hidden border border-emerald-700/50 relative">
+            <div class="bg-gradient-to-r from-banten-gold to-yellow-400 h-full transition-all duration-300 ease-out" 
+                 :style="`width: ${loadingProgress}%`"></div>
+        </div>
+
+        <div class="text-xs text-emerald-300 mt-3 font-mono">
+            Memuat Data Analitik... <span x-text="Math.round(loadingProgress) + '%'"></span>
+        </div>
+
+        <!-- Dynamic Loading Quotes -->
+        <div class="mt-8 text-center max-w-sm px-4">
+            <p class="text-xs italic text-emerald-100/80 transition-opacity duration-500" x-text="loadingQuote"></p>
+        </div>
+        
+        <!-- Instant Skip Button -->
+        <button @click="skipLoading()" class="mt-12 text-xs text-emerald-300/60 hover:text-banten-gold transition-colors border border-emerald-800 hover:border-banten-gold px-3 py-1 rounded-full">
+            Lewati Animasi
+        </button>
+    </div>
+
+    <!-- ==================== MAIN APPLICATION ==================== -->
+    <div x-show="!loading" class="flex flex-col h-screen overflow-hidden" x-init="initApp()">
+        
+        <!-- TOP NAVIGATION BAR -->
+        <header class="bg-banten-dark text-white border-b border-emerald-800 shadow-md z-30 px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <!-- Mini Logo -->
+                <div class="p-1.5 bg-banten-gold/10 rounded-lg border border-banten-gold/30">
+                    <svg class="w-8 h-8 text-banten-gold" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M25 110 H75 L70 95 H30 Z" fill="currentColor"/>
+                        <path d="M32 95 L34 75 H66 L68 95 Z" fill="currentColor" opacity="0.8"/>
+                        <path d="M36 75 L38 55 H62 L64 75 Z" fill="currentColor" opacity="0.9"/>
+                        <path d="M40 55 L42 35 H58 L60 55 Z" fill="currentColor"/>
+                        <path d="M30 35 L50 20 L70 35 Z" fill="#0B2F1D" stroke="currentColor" stroke-width="4"/>
+                        <path d="M42 20 L50 5 L58 20 Z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold tracking-wide banten-title text-banten-gold leading-none">SATU DATA</h2>
+                    <span class="text-xs text-emerald-300 font-medium">PROVINSI BANTEN</span>
+                </div>
+            </div>
+
+            <!-- Desktop Nav Links -->
+            <nav class="hidden md:flex items-center space-x-1">
+                <button @click="activeTab = 'profile'" :class="activeTab === 'profile' ? 'bg-emerald-800/80 text-white border-banten-gold' : 'text-emerald-100 hover:bg-emerald-900/50'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-b-2 border-transparent flex items-center gap-2">
+                    <i data-lucide="user" class="w-4 h-4 text-banten-gold"></i> Profil Daerah
+                </button>
+                <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'bg-emerald-800/80 text-white border-banten-gold' : 'text-emerald-100 hover:bg-emerald-900/50'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-b-2 border-transparent flex items-center gap-2">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-banten-gold"></i> Dashboard Interaktif
+                </button>
+                <button @click="activeTab = 'stats'" :class="activeTab === 'stats' ? 'bg-emerald-800/80 text-white border-banten-gold' : 'text-emerald-100 hover:bg-emerald-900/50'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-b-2 border-transparent flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-banten-gold"></i> Statistik Sektoral
+                </button>
+                <button @click="activeTab = 'assistant'" :class="activeTab === 'assistant' ? 'bg-emerald-800/80 text-white border-banten-gold' : 'text-emerald-100 hover:bg-emerald-900/50'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border-b-2 border-transparent flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-banten-gold animate-pulse"></i> Tanya Sura (AI)
+                </button>
+            </nav>
+
+            <!-- Actions -->
+            <div class="flex items-center space-x-2">
+                <button @click="toggleDarkMode()" class="p-2 text-emerald-200 hover:text-white hover:bg-emerald-900/50 rounded-full transition-colors" title="Ubah Tema">
+                    <i x-show="!darkMode" data-lucide="moon" class="w-5 h-5"></i>
+                    <i x-show="darkMode" data-lucide="sun" class="w-5 h-5 text-banten-gold"></i>
+                </button>
+                <span class="h-6 w-px bg-emerald-800 hidden sm:inline-block"></span>
+                <span class="text-xs bg-emerald-900 border border-emerald-700/80 text-banten-gold px-3 py-1 rounded-full font-mono font-medium hidden sm:inline-block">
+                    Update: Juni 2026
+                </span>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT WRAPPER (With Sidebar on Desktop / Tab layout) -->
+        <div class="flex flex-1 overflow-hidden relative">
+            
+            <!-- Mobile Bottom Navigation Bar (Visible only on mobile screens) -->
+            <div class="md:hidden fixed bottom-0 left-0 right-0 bg-banten-dark border-t border-emerald-800 shadow-2xl z-40 flex justify-around py-2 px-1 text-white">
+                <button @click="activeTab = 'profile'" :class="activeTab === 'profile' ? 'text-banten-gold' : 'text-emerald-300'" class="flex flex-col items-center space-y-1 py-1 px-3">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-semibold">Profil</span>
+                </button>
+                <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'text-banten-gold' : 'text-emerald-300'" class="flex flex-col items-center space-y-1 py-1 px-3">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-semibold">Dashboard</span>
+                </button>
+                <button @click="activeTab = 'stats'" :class="activeTab === 'stats' ? 'text-banten-gold' : 'text-emerald-300'" class="flex flex-col items-center space-y-1 py-1 px-3">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-semibold">Statistik</span>
+                </button>
+                <button @click="activeTab = 'assistant'" :class="activeTab === 'assistant' ? 'text-banten-gold' : 'text-emerald-300'" class="flex flex-col items-center space-y-1 py-1 px-3">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-semibold">Asisten AI</span>
+                </button>
+            </div>
+
+            <!-- MAIN CONTENT DISPLAY AREA (Scrollable) -->
+            <main class="flex-1 overflow-y-auto pb-16 md:pb-0 bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+                
+                <!-- TAB 1: PROFIL DAERAH (HOME) -->
+                <div x-show="activeTab === 'profile'" class="p-4 sm:p-6 lg:p-8 space-y-6">
+                    <!-- Hero Welcoming Section -->
+                    <section class="relative overflow-hidden bg-gradient-to-r from-banten-dark via-emerald-900 to-emerald-800 rounded-3xl text-white p-6 sm:p-10 shadow-lg">
+                        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                        <div class="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                            <div class="lg:col-span-2 space-y-4">
+                                <span class="bg-banten-gold/20 text-banten-gold border border-banten-gold/30 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">Selamat Datang</span>
+                                <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-none banten-title text-white">
+                                    Provinsi <span class="text-banten-gold">Banten</span>
+                                </h1>
+                                <p class="text-sm sm:text-lg text-emerald-100 max-w-xl leading-relaxed">
+                                    "Iman dan Taqwa" — Menjadi wilayah penghubung strategis Nusantara yang mandiri, sejahtera, berdaya saing tinggi, dan berbudaya luhur.
+                                </p>
+                                <div class="flex flex-wrap gap-3 pt-2">
+                                    <button @click="activeTab = 'dashboard'" class="bg-banten-gold hover:bg-banten-golddark text-banten-dark px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                                        <i data-lucide="line-chart" class="w-4 h-4"></i> Buka Dashboard Data
+                                    </button>
+                                    <a href="#quick-stats" class="bg-emerald-950/60 hover:bg-emerald-950 text-white border border-emerald-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2">
+                                        <i data-lucide="eye" class="w-4 h-4"></i> Lihat Ringkasan Profil
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="hidden lg:flex justify-center items-center">
+                                <div class="relative w-64 h-64 border-4 border-dashed border-banten-gold/30 rounded-full flex items-center justify-center animate-[spin_40s_linear_infinite]">
+                                    <div class="absolute w-52 h-52 bg-emerald-950/80 rounded-full flex items-center justify-center border border-banten-gold/20">
+                                        <img src="https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&q=80&w=400" alt="Banten Landmark placeholder" class="w-48 h-48 rounded-full object-cover opacity-60 mix-blend-overlay">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Quick Numerical Stats Counters -->
+                    <section id="quick-stats" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 flex items-center space-x-4">
+                            <div class="p-3 bg-indigo-50 dark:bg-indigo-950/50 rounded-xl text-indigo-600 dark:text-indigo-400">
+                                <i data-lucide="map" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Luas Wilayah</p>
+                                <h3 class="text-lg sm:text-2xl font-bold dark:text-white">9.662,92 <span class="text-xs font-normal text-slate-400">km²</span></h3>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 flex items-center space-x-4">
+                            <div class="p-3 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl text-emerald-600 dark:text-emerald-400">
+                                <i data-lucide="users" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Estimasi Penduduk</p>
+                                <h3 class="text-lg sm:text-2xl font-bold dark:text-white">12,4 <span class="text-xs font-normal text-slate-400">Juta</span></h3>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 flex items-center space-x-4">
+                            <div class="p-3 bg-amber-50 dark:bg-amber-950/50 rounded-xl text-amber-600 dark:text-amber-400">
+                                <i data-lucide="building-2" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Kabupaten / Kota</p>
+                                <h3 class="text-lg sm:text-2xl font-bold dark:text-white">4 <span class="text-sm font-normal text-slate-400">Kab</span> / 4 <span class="text-sm font-normal text-slate-400">Kota</span></h3>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 flex items-center space-x-4">
+                            <div class="p-3 bg-rose-50 dark:bg-rose-950/50 rounded-xl text-rose-600 dark:text-rose-400">
+                                <i data-lucide="award" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">IPM Banten (2024)</p>
+                                <h3 class="text-lg sm:text-2xl font-bold dark:text-white">76,15 <span class="text-xs font-normal text-emerald-500 font-semibold">(Tinggi)</span></h3>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Profil & Deskripsi Geografis Banten -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Left Column: Deskripsi Ringkas & Sejarah -->
+                        <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200/60 dark:border-slate-700/60 space-y-4">
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <i data-lucide="book-open" class="text-banten-emerald"></i> Sekilas Sejarah & Geografis
+                            </h2>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                                Provinsi Banten dibentuk pada tanggal 4 Oktober 2000 berdasarkan Undang-Undang No. 23 Tahun 2000. Sebelumnya, wilayah Banten merupakan bagian dari Provinsi Jawa Barat. Wilayah ini dikenal secara historis sebagai pusat perdagangan laut penting berkat Kesultanan Banten yang jaya pada abad ke-16 hingga ke-17.
+                            </p>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                                Secara geografis, Banten terletak di ujung barat Pulau Jawa, berbatasan langsung dengan Selat Sunda di sebelah barat, Samudra Hindia di sebelah selatan, DKI Jakarta dan Provinsi Jawa Barat di sebelah timur. Posisi strategis ini menjadikan Banten sebagai koridor industri, manufaktur, pariwisata, dan transportasi skala nasional yang menghubungkan Jawa dengan Sumatra.
+                            </p>
+                            
+                            <!-- Wilayah Administratif Tabs/Cards -->
+                            <div class="pt-4">
+                                <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-3">Wilayah Administratif:</h3>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <p class="font-bold text-slate-900 dark:text-white">Kab. Lebak</p>
+                                        <p class="text-slate-400 mt-0.5">Ibu Kota: Rangkasbitung</p>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <p class="font-bold text-slate-900 dark:text-white">Kab. Pandeglang</p>
+                                        <p class="text-slate-400 mt-0.5">Ibu Kota: Pandeglang</p>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <p class="font-bold text-slate-900 dark:text-white">Kab. Serang</p>
+                                        <p class="text-slate-400 mt-0.5">Ibu Kota: Ciruas</p>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <p class="font-bold text-slate-900 dark:text-white">Kab. Tangerang</p>
+                                        <p class="text-slate-400 mt-0.5">Ibu Kota: Tigaraksa</p>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <p class="font-bold text-slate-900 dark:text-white">Kota Serang</p>
+                                        <p class="text-slate-400 mt-0.5">Ibu Kota Provinsi</p>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <p class="font-bold text-slate-900 dark:text-white">Kota Cilegon</p>
+                                        <p class="text-slate-400 mt-0.5">Kota Industri Baja</p>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <p class="font-bold text-slate-900 dark:text-white">Kota Tangerang</p>
+                                        <p class="text-slate-400 mt-0.5">Kota Manufaktur</p>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <p class="font-bold text-slate-900 dark:text-white">Kota Tangerang Selatan</p>
+                                        <p class="text-slate-400 mt-0.5">Pusat Bisnis & Jasa</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Visi & Misi, Lambang Banten -->
+                        <div class="bg-gradient-to-br from-emerald-900 to-banten-dark text-white rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                            <div class="space-y-4">
+                                <h2 class="text-lg font-bold text-banten-gold banten-title flex items-center gap-2">
+                                    <i data-lucide="shield-check"></i> Visi Pembangunan
+                                </h2>
+                                <blockquote class="border-l-2 border-banten-gold pl-4 text-sm italic text-emerald-100">
+                                    "Banten yang Maju, Mandiri, Berdaya Saing, Sejahtera, dan Berakhlakul Karimah."
+                                </blockquote>
+                                <div class="space-y-3 pt-2 text-xs">
+                                    <h3 class="font-semibold text-banten-gold">Prioritas Utama Banten:</h3>
+                                    <div class="flex items-start space-x-2">
+                                        <span class="p-1 bg-emerald-800 rounded-lg text-banten-gold mt-0.5">1</span>
+                                        <p class="text-emerald-100">Meningkatkan kualitas sumber daya manusia melalui pendidikan dan layanan kesehatan berkualitas.</p>
+                                    </div>
+                                    <div class="flex items-start space-x-2">
+                                        <span class="p-1 bg-emerald-800 rounded-lg text-banten-gold mt-0.5">2</span>
+                                        <p class="text-emerald-100">Pemerataan infrastruktur jalan, sanitasi, dan akses digital terpadu ke seluruh pelosok desa.</p>
+                                    </div>
+                                    <div class="flex items-start space-x-2">
+                                        <span class="p-1 bg-emerald-800 rounded-lg text-banten-gold mt-0.5">3</span>
+                                        <p class="text-emerald-100">Optimalisasi investasi hilirisasi industri kimia, baja, serta pengembangan agrowisata berkelanjutan.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-6 border-t border-emerald-800/80 mt-6 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="info" class="w-5 h-5 text-banten-gold"></i>
+                                    <div>
+                                        <p class="text-[10px] uppercase text-emerald-300 tracking-wider">Layanan Pengaduan</p>
+                                        <p class="text-xs font-bold text-white">SP4N-LAPOR! Banten</p>
+                                    </div>
+                                </div>
+                                <a href="https://banten.lapor.go.id" target="_blank" class="text-xs bg-banten-gold text-banten-dark px-3 py-1.5 rounded-lg font-bold hover:bg-yellow-400 transition-colors">Kunjungi</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: INTERACTIVE DASHBOARD IFRAME -->
+                <div x-show="activeTab === 'dashboard'" class="h-full flex flex-col p-4 sm:p-6 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                                <i data-lucide="layout-dashboard" class="text-banten-emerald"></i> Dashboard Interaktif Looker Studio
+                            </h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">
+                                Visualisasi data spasial dan statistik perkembangan Provinsi Banten secara real-time.
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button @click="refreshIframe()" class="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all flex items-center gap-2 text-sm" title="Refresh Dashboard">
+                                <i data-lucide="rotate-cw" class="w-4 h-4"></i> Muat Ulang
+                            </button>
+                            <button @click="toggleFullscreenIframe()" class="bg-banten-emerald hover:bg-banten-dark text-white p-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm">
+                                <i data-lucide="maximize" class="w-4 h-4" x-show="!iframeFullscreen"></i>
+                                <i data-lucide="minimize" class="w-4 h-4" x-show="iframeFullscreen"></i>
+                                <span class="hidden sm:inline" x-text="iframeFullscreen ? 'Normal' : 'Layar Penuh'">Layar Penuh</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- IFRAME CONTAINER WRAPPER -->
+                    <div :class="iframeFullscreen ? 'fixed inset-0 z-50 bg-slate-900 p-4' : 'relative w-full flex-1 bg-white dark:bg-slate-800 rounded-3xl shadow-md border border-slate-200 dark:border-slate-700 p-2 overflow-hidden flex flex-col min-h-[480px]'">
+                        <!-- Header inside fullscreen mode -->
+                        <div x-show="iframeFullscreen" class="flex justify-between items-center mb-4 text-white">
+                            <span class="text-sm font-semibold banten-title text-banten-gold">DASHBOARD SATU DATA BANTEN</span>
+                            <button @click="toggleFullscreenIframe()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-white">
+                                <i data-lucide="minimize" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <!-- Real Iframe Implementation (Looker Studio) -->
+                        <div class="w-full flex-1 relative rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-950">
+                            <!-- Overlay loading indicator specifically for iframe loading -->
+                            <div id="iframe-loader" class="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-slate-900 z-10 transition-opacity duration-500">
+                                <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-banten-emerald mb-3"></div>
+                                <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Menghubungkan ke Google Looker Studio...</span>
+                            </div>
+                            
+                            <!-- Embedded Looker Studio Iframe -->
+                            <iframe 
+                                id="banten-iframe"
+                                class="w-full h-full border-0 rounded-2xl"
+                                src="https://datastudio.google.com/embed/reporting/13e86828-4ead-43dd-b8b9-7db9b9808575/page/ZmA0F" 
+                                frameborder="0" 
+                                style="border:0" 
+                                allowfullscreen 
+                                sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                                onload="document.getElementById('iframe-loader').classList.add('opacity-0', 'pointer-events-none')">
+                            </iframe>
+                        </div>
+
+                        <!-- Iframe Context Note -->
+                        <div class="mt-2 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-2 py-1 gap-2">
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="shield-alert" class="w-4 h-4 text-banten-gold"></i> Gunakan desktop untuk pengalaman eksplorasi data yang lebih optimal.
+                            </span>
+                            <span class="font-mono">Sumber: Google Looker Studio Terpadu Banten</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: STATISTIK SEKTORAL -->
+                <div x-show="activeTab === 'stats'" class="p-4 sm:p-6 lg:p-8 space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                            <i data-lucide="bar-chart-3" class="text-banten-emerald"></i> Statistik Makro Banten
+                        </h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">
+                            Ringkasan performa ekonomi dan kemasyarakatan Banten dari BPS (Badan Pusat Statistik) Provinsi Banten.
+                        </p>
+                    </div>
+
+                    <!-- Interactive Chart Cards Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Chart 1: Pertumbuhan Ekonomi -->
+                        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200/60 dark:border-slate-700/60">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 dark:text-slate-100">Laju Pertumbuhan Ekonomi (%)</h3>
+                                    <p class="text-xs text-slate-400">Tahun ke Tahun (YoY) - Pemulihan & Ekspansi</p>
+                                </div>
+                                <span class="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-xs font-semibold px-2 py-1 rounded">Update 2025/2026</span>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="chartEkonomi"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Peningkatan IPM -->
+                        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200/60 dark:border-slate-700/60">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 dark:text-slate-100">Tren Indeks Pembangunan Manusia (IPM)</h3>
+                                    <p class="text-xs text-slate-400">Komparasi kualitas hidup masyarakat Banten</p>
+                                </div>
+                                <span class="bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-2 py-1 rounded">Kategori Tinggi</span>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="chartIPM"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Table on Sektoral -->
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200/60 dark:border-slate-700/60">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                <i data-lucide="list-filter" class="text-banten-gold"></i> Indikator Strategis Terbaru (2025 - 2026)
+                            </h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                                <thead class="bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 text-xs uppercase">
+                                    <tr>
+                                        <th class="p-4 rounded-l-lg">Indikator Pembangunan</th>
+                                        <th class="p-4">Nilai Terakhir</th>
+                                        <th class="p-4">Capaian Periode Sebelumnya</th>
+                                        <th class="p-4">Status / Tren</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                                    <tr>
+                                        <td class="p-4 font-semibold text-slate-800 dark:text-slate-100">Tingkat Pengangguran Terbuka (TPT)</td>
+                                        <td class="p-4">7,02%</td>
+                                        <td class="p-4">7,52%</td>
+                                        <td class="p-4"><span class="bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-xs px-2.5 py-1 rounded-full font-semibold">Turun 0,5% (Sangat Baik)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-semibold text-slate-800 dark:text-slate-100">Gini Ratio (Ketimpangan)</td>
+                                        <td class="p-4">0,361</td>
+                                        <td class="p-4">0,368</td>
+                                        <td class="p-4"><span class="bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-xs px-2.5 py-1 rounded-full font-semibold">Membaik</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-semibold text-slate-800 dark:text-slate-100">Persentase Penduduk Miskin</td>
+                                        <td class="p-4">5,84%</td>
+                                        <td class="p-4">6,17%</td>
+                                        <td class="p-4"><span class="bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-xs px-2.5 py-1 rounded-full font-semibold">Menurun (Positif)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-semibold text-slate-800 dark:text-slate-100">Pertumbuhan Investasi (PMA & PMDN)</td>
+                                        <td class="p-4">Rp 102 Triliun</td>
+                                        <td class="p-4">Rp 85 Triliun</td>
+                                        <td class="p-4"><span class="bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 text-xs px-2.5 py-1 rounded-full font-semibold">Naik 20% (Target Terlampaui)</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: ASISTEN AI "SURA" -->
+                <div x-show="activeTab === 'assistant'" class="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+                    <div class="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-banten-emerald to-banten-gold flex items-center justify-center text-white shadow-md">
+                                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">Asisten AI "SURA"</h2>
+                                <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Banten Smart Data Guide &bull; Gemini 2.5 Flash</span>
+                            </div>
+                        </div>
+                        <span class="text-xs bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-full font-semibold">Online & Aktif</span>
+                    </div>
+
+                    <!-- Chat Message Area -->
+                    <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-box-area">
+                        <!-- Default Bot Introduction -->
+                        <div class="flex space-x-3 max-w-xl">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-banten-emerald flex items-center justify-center text-white text-xs font-bold">AI</div>
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+                                <p class="text-sm text-slate-800 dark:text-slate-100 leading-relaxed">
+                                    Sampurasun! Kula <strong>Sura</strong> (Satu Data Banten AI), asisten AI khusus Anda. Saya siap membantu Anda menjelaskan indikator statistik Banten, geografi, sejarah Kesultanan Banten, kebudayaan Baduy, kawasan industri Cilegon, maupun cara membaca dashboard data Looker Studio di atas.
+                                </p>
+                                <p class="text-sm text-slate-800 dark:text-slate-100 leading-relaxed mt-2">
+                                    Silakan ajukan pertanyaan seputar data atau informasi Provinsi Banten!
+                                </p>
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <button @click="askSuggested('Berapa jumlah penduduk Banten saat ini?')" class="text-xs bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-lg transition-colors">
+                                        👥 Penduduk Banten
+                                    </button>
+                                    <button @click="askSuggested('Bagaimana kondisi pengangguran dan industri di Banten?')" class="text-xs bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-lg transition-colors">
+                                        🏭 Industri & TPT
+                                    </button>
+                                    <button @click="askSuggested('Sebutkan sejarah singkat pembentukan Provinsi Banten!')" class="text-xs bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-lg transition-colors">
+                                        📜 Sejarah Pembentukan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat history loop -->
+                        <template x-for="(msg, index) in chatHistory" :key="index">
+                            <div class="flex space-x-3" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
+                                <div x-show="msg.role === 'assistant'" class="flex-shrink-0 w-8 h-8 rounded-full bg-banten-emerald flex items-center justify-center text-white text-xs font-bold">AI</div>
+                                <div :class="msg.role === 'user' ? 'bg-banten-emerald text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-none border border-slate-200/50 dark:border-slate-700/50'" class="p-4 rounded-2xl max-w-xl shadow-sm text-sm whitespace-pre-line leading-relaxed">
+                                    <span x-html="msg.text"></span>
+                                </div>
+                                <div x-show="msg.role === 'user'" class="flex-shrink-0 w-8 h-8 rounded-full bg-banten-gold flex items-center justify-center text-banten-dark text-xs font-bold">Me</div>
+                            </div>
+                        </template>
+
+                        <!-- Typing Indicator -->
+                        <div x-show="botTyping" class="flex space-x-3 items-center">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-banten-emerald flex items-center justify-center text-white text-xs font-bold">AI</div>
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-200/50 dark:border-slate-700/50 flex space-x-1.5 py-3">
+                                <span class="w-2.5 h-2.5 bg-slate-400 dark:bg-slate-600 rounded-full animate-bounce"></span>
+                                <span class="w-2.5 h-2.5 bg-slate-400 dark:bg-slate-600 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                                <span class="w-2.5 h-2.5 bg-slate-400 dark:bg-slate-600 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input message panel -->
+                    <div class="p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-800">
+                        <form @submit.prevent="sendMessage()" class="flex space-x-2">
+                            <input 
+                                x-model="userInput" 
+                                type="text" 
+                                placeholder="Tanyakan apa saja seputar data atau info Provinsi Banten..." 
+                                class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-banten-emerald/50 dark:text-white"
+                                :disabled="botTyping">
+                            <button 
+                                type="submit" 
+                                class="bg-banten-emerald hover:bg-banten-dark text-white px-5 py-3 rounded-xl font-bold text-sm shadow transition-all flex items-center gap-2 disabled:opacity-50"
+                                :disabled="botTyping || !userInput.trim()">
+                                <span>Kirim</span>
+                                <i data-lucide="send-horizontal" class="w-4 h-4"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+    </div>
+
+</body>
+</html>
